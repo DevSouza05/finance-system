@@ -1,74 +1,112 @@
-"use strict"
+"use strict";
 
+document.addEventListener('DOMContentLoaded', async function () {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        window.location.href = '/login.html';
+        return;
+    }
 
-document.addEventListener('DOMContentLoaded', function() {
-    
-    
-    const getItensBD = () => {
-        const storedItems = JSON.parse(localStorage.getItem("db_items"));
-        return storedItems || [];
-    };
-
-    const setItensBD = () => {
-        localStorage.setItem("db_items", JSON.stringify(items));
-    };
-
-   
     const tbody = document.querySelector("tbody");
     const descItem = document.querySelector("#desc");
     const amount = document.querySelector("#amount");
     const type = document.querySelector("#type");
     const btnNew = document.querySelector("#btnNew");
-    const btnAuxilioIA = document.querySelector("#btnAuxilioIA");
+    const monthSelect = document.querySelector("#monthSelect");
 
     const incomes = document.querySelector(".incomes");
     const expenses = document.querySelector(".expenses");
     const total = document.querySelector(".total");
 
-    let items = getItensBD();  
+    let data = await getFinanceData();
 
-   
-    btnNew.onclick = () => {
-        
-       
+    async function getFinanceData() {
+        const response = await fetch('/api/data', {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+        if (response.ok) {
+            return await response.json();
+        } else {
+            // If the token is invalid, redirect to login
+            window.location.href = '/login.html';
+            return {};
+        }
+    }
+
+    async function setFinanceData() {
+        await fetch('/api/data', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify(data),
+        });
+    }
+
+    function getCurrentMonth() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = (now.getMonth() + 1).toString().padStart(2, '0');
+        return `${year}-${month}`;
+    }
+
+    function populateMonthSelect() {
+        const months = Object.keys(data).sort().reverse();
+        monthSelect.innerHTML = "";
+        months.forEach(month => {
+            const option = document.createElement("option");
+            option.value = month;
+            option.textContent = month;
+            monthSelect.appendChild(option);
+        });
+    }
+
+    btnNew.onclick = async () => {
         if (descItem.value.trim() === "" || amount.value.trim() === "" || type.value === "") {
             return alert("Preencha todos os campos!");
         }
 
-       
         const amountValue = parseFloat(amount.value);
         if (isNaN(amountValue) || amountValue <= 0) {
             return alert("O valor deve ser um número positivo.");
         }
 
-       
-        items.push({
+        const currentMonth = getCurrentMonth();
+        if (!data[currentMonth]) {
+            data[currentMonth] = [];
+        }
+
+        data[currentMonth].push({
             desc: descItem.value,
             amount: amountValue.toFixed(2),
             type: type.value,
+            paid: false,
         });
 
-        // Atualiza o LocalStorage e recarrega a lista
-        setItensBD();
-        loadItens();
+        await setFinanceData();
+        populateMonthSelect();
+        monthSelect.value = currentMonth;
+        loadItens(currentMonth);
 
-        
         descItem.value = "";
         amount.value = "";
     };
 
-    
-    function deleteItem(index) {
-        
-        items.splice(index, 1);
-        
-        setItensBD();
-       
-        loadItens();
+    async function deleteItem(month, index) {
+        data[month].splice(index, 1);
+        await setFinanceData();
+        loadItens(month);
     }
 
-  
-    function insertItem(item, index) {
+    function updateItemStatus(month, index, isPaid) {
+        data[month][index].paid = isPaid;
+        setFinanceData();
+    }
+
+    function insertItem(item, month, index) {
         let tr = document.createElement("tr");
 
         tr.innerHTML = `
@@ -79,35 +117,41 @@ document.addEventListener('DOMContentLoaded', function() {
                     ? '<i class="bx bxs-chevron-up-circle"></i>'
                     : '<i class="bx bxs-chevron-down-circle"></i>'}
             </td>
+            <td><input type="checkbox" class="paid-checkbox" data-month="${month}" data-index="${index}" ${item.paid ? 'checked' : ''}></td>
             <td class="columnAction">
-                <button class="deleteBtn" data-index="${index}">
+                <button class="deleteBtn" data-month="${month}" data-index="${index}">
                     <i class='bx bx-trash'></i>
                 </button>
             </td>
         `;
-        
-     
+
         tbody.appendChild(tr);
 
-       
-        tr.querySelector(".deleteBtn").addEventListener("click", function() {
+        tr.querySelector(".deleteBtn").addEventListener("click", function () {
+            const month = this.getAttribute("data-month");
             const index = parseInt(this.getAttribute("data-index"));
-            deleteItem(index);
+            deleteItem(month, index);
+        });
+
+        tr.querySelector(".paid-checkbox").addEventListener("change", function () {
+            const month = this.getAttribute("data-month");
+            const index = parseInt(this.getAttribute("data-index"));
+            updateItemStatus(month, index, this.checked);
         });
     }
 
-   
-    function loadItens() {
-        tbody.innerHTML = ""; 
+    function loadItens(month) {
+        const items = data[month] || [];
+        tbody.innerHTML = "";
         items.forEach((item, index) => {
-            insertItem(item, index);
+            insertItem(item, month, index);
         });
 
-        getTotals();  
+        getTotals(month);
     }
 
-   
-    function getTotals() {
+    function getTotals(month) {
+        const items = data[month] || [];
         const amountIncomes = items.filter(item => item.type === "Entrada").map(item => parseFloat(item.amount));
         const amountExpenses = items.filter(item => item.type === "Saída").map(item => parseFloat(item.amount));
 
@@ -120,35 +164,13 @@ document.addEventListener('DOMContentLoaded', function() {
         total.textContent = totalBalance;
     }
 
-   
-    async function callAuxilioIA() {
-        const analysisData = {
-            totalIncomes: parseFloat(incomes.textContent),
-            totalExpenses: parseFloat(expenses.textContent),
-            totalBalance: parseFloat(total.textContent),
-            items: items
-        };
+    monthSelect.onchange = () => {
+        loadItens(monthSelect.value);
+    };
 
-        try {
-            const response = await fetch('https://sua-api-de-ia.com/analise', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(analysisData)
-            });
-            
-            const data = await response.json();
-            alert(data.recommendations);
-
-        } catch (error) {
-            console.error("Erro ao chamar a IA:", error);
-            alert("Erro ao buscar recomendações.");
-        }
-    }
-
-    btnAuxilioIA.onclick = callAuxilioIA;
-
-   
-    loadItens(); 
+    // Initial Load
+    populateMonthSelect();
+    const initialMonth = monthSelect.value || getCurrentMonth();
+    monthSelect.value = initialMonth;
+    loadItens(initialMonth);
 });
