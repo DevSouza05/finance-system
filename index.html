@@ -6,59 +6,64 @@
     <title>HS-Finance</title>
 
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-   
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap">
     <link href="./style/style.css" rel="stylesheet">
 </head>
 <body>
+    <header>
+        <h1>GASTOS PETERSON</h1>
+    </header>
     <main>
-        <div class="resume">
-            <div>
-                Entradas: R$ 
-                <span class="incomes">0.00</span>
+        <div class="resume-container">
+            <div class="resume-card">
+                <h2>Entradas</h2>
+                <p>R$ <span class="incomes">0.00</span></p>
             </div>
-
-            <div>
-                Saídas: R$
-                <span class="expenses">0.00</span>
+            <div class="resume-card">
+                <h2>Saídas</h2>
+                <p>R$ <span class="expenses">0.00</span></p>
             </div>
-
-            <div>
-                Total: R$
-                <span class="total">0.00</span>
+            <div class="resume-card total-card">
+                <h2>Total</h2>
+                <p>R$ <span class="total">0.00</span></p>
             </div>
         </div>
 
-        <div class="NewItem">
-            <div class="divDesc">
+        <div class="form-container">
+            <div class="form-group">
                 <label for="desc">Descrição</label>
                 <input type="text" id="desc" placeholder="Exemplo: Mercado">
             </div>
-
-            <div class="divAmount">
+            <div class="form-group">
                 <label for="amount">Valor</label>
                 <input type="number" id="amount" placeholder="0.00">
             </div>
-
-            <div class="divType">
+            <div class="form-group">
                 <label for="type">Tipo</label>
                 <select id="type">
                     <option value="Entrada">Entrada</option>
                     <option value="Saída">Saída</option>
                 </select>
             </div>
-            <button id="btnNew">Incluir</button>
-        
-            <button id="btnAuxilioIA">Auxílio IA</button>
-
+            <div class="form-group-buttons">
+                <button id="btnNew">Incluir</button>
+                <button id="btnAuxilioIA">Auxílio IA</button>
+            </div>
         </div>
 
-        <div class="divTable">
+        <div class="month-selector-container">
+            <label for="monthSelect">Mês:</label>
+            <select id="monthSelect"></select>
+        </div>
+
+        <div class="table-container">
             <table>
                 <thead>
                     <tr>
                         <th>Descrição</th>
                         <th class="columnAmount">Valor</th>
                         <th class="columnType">Tipo</th>
+                        <th>Status</th>
                         <th class="columnAction">Ação</th>
                     </tr>
                 </thead>
