@@ -3,87 +3,71 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnRegister = document.getElementById('btnRegister');
     const btnLogout = document.getElementById('btnLogout');
 
-    // ✅ Função para enviar requisições com erro tratado
-    async function handleRequest(url, body, onSuccessMessage, redirectTo) {
-        try {
-            const { username, password } = body;
+    const getUsers = () => JSON.parse(localStorage.getItem('users')) || [];
+    const saveUsers = (users) => localStorage.setItem('users', JSON.stringify(users));
+
+    // ✅ Registro
+    if (btnRegister) {
+        btnRegister.addEventListener('click', () => {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+
             if (!username || !password) {
-                alert("⚠️ Preencha todos os campos!");
-                return;
+                return alert("⚠️ Preencha todos os campos!");
             }
 
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body),
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                alert(`❌ ${data.message || "Erro na operação"}`);
-                return;
+            const users = getUsers();
+            if (users.find(user => user.username === username)) {
+                return alert("❌ Nome de usuário já existe!");
             }
 
-            if (data.token) {
-                localStorage.setItem('token', data.token);
-                console.log("✅ Token salvo:", data.token);
-            }
+            users.push({ username, password });
+            saveUsers(users);
 
-            alert(onSuccessMessage);
-            window.location.href = redirectTo;
-        } catch (error) {
-            console.error('❌ Erro no Fetch:', error);
-            alert("Erro ao conectar com o servidor!");
-        }
+            alert("✅ Registrado com sucesso! Faça login agora 👉");
+            window.location.href = "login.html";
+        });
     }
 
     // ✅ Login
     if (btnLogin) {
         btnLogin.addEventListener('click', () => {
-            handleRequest(
-                '/api/login',
-                {
-                    username: document.getElementById('username').value.trim(),
-                    password: document.getElementById('password').value.trim()
-                },
-                "✅ Login realizado com sucesso!",
-                "/index.html"
-            );
-        });
-    }
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
 
-    // ✅ Registro
-    if (btnRegister) {
-        btnRegister.addEventListener('click', () => {
-            handleRequest(
-                '/api/register',
-                {
-                    username: document.getElementById('username').value.trim(),
-                    password: document.getElementById('password').value.trim()
-                },
-                "✅ Registrado com sucesso! Faça login agora 👉",
-                "/login.html"
-            );
+            if (!username || !password) {
+                return alert("⚠️ Preencha todos os campos!");
+            }
+
+            const users = getUsers();
+            const user = users.find(user => user.username === username && user.password === password);
+
+            if (!user) {
+                return alert("❌ Usuário ou senha inválidos!");
+            }
+
+            sessionStorage.setItem('loggedInUser', user.username);
+            alert("✅ Login realizado com sucesso!");
+            window.location.href = "index.html";
         });
     }
 
     // ✅ Logout
     if (btnLogout) {
         btnLogout.addEventListener("click", () => {
-            localStorage.removeItem("token");
+            sessionStorage.removeItem("loggedInUser");
             alert("👋 Você saiu da sua conta!");
-            window.location.href = "/login.html";
+            window.location.href = "login.html";
         });
     }
 
     // ✅ Proteção de páginas privadas
-    const protectedPages = ["/index.html", "/dashboard.html"];
-    if (protectedPages.includes(window.location.pathname)) {
-        const token = localStorage.getItem("token");
-        if (!token) {
+    const isProtectedPage = window.location.pathname.endsWith('index.html');
+    if (isProtectedPage) {
+        const loggedInUser = sessionStorage.getItem("loggedInUser");
+        if (!loggedInUser) {
             alert("⚠️ Você precisa estar logado!");
-            window.location.href = "/login.html";
+            window.location.href = "login.html";
         }
     }
 });
