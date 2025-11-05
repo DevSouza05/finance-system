@@ -89,15 +89,15 @@ document.addEventListener('DOMContentLoaded', function () {
         let tr = document.createElement("tr");
 
         tr.innerHTML = `
-            <td>${item.desc}</td>
-            <td>R$ ${item.amount}</td>
-            <td class="columnType">
+            <td data-label="Descrição">${item.desc}</td>
+            <td data-label="Valor">R$ ${item.amount}</td>
+            <td data-label="Tipo" class="columnType">
                 ${item.type === "Entrada"
                     ? '<i class="bx bxs-chevron-up-circle"></i>'
                     : '<i class="bx bxs-chevron-down-circle"></i>'}
             </td>
-            <td><input type="checkbox" class="paid-checkbox" data-month="${month}" data-index="${index}" ${item.paid ? 'checked' : ''}></td>
-            <td class="columnAction">
+            <td data-label="Status"><input type="checkbox" class="paid-checkbox" data-month="${month}" data-index="${index}" ${item.paid ? 'checked' : ''}></td>
+            <td data-label="Ação" class="columnAction">
                 <button class="deleteBtn" data-month="${month}" data-index="${index}">
                     <i class='bx bx-trash'></i>
                 </button>
