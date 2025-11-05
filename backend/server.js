@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
+const path = require('path');
 const pool = require('./db');
 
 const app = express();
@@ -9,7 +10,7 @@ const PORT = 3000;
 const JWT_SECRET = process.env.JWT_SECRET;
 
 app.use(bodyParser.json());
-app.use(express.static(__dirname));
+app.use(express.static(path.join(__dirname, '../frontend')));
 
 // ✅ Testa conexão e cria tabela
 async function createUsersTable() {
