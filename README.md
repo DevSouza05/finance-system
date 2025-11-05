@@ -25,8 +25,9 @@ Para começar a usar o projeto, siga as instruções abaixo.
    ```sh
    git clone https://github.com/seu-usuario/finance-system.git
    ```
-2. Instale as dependências do NPM:
+2. Navegue até a pasta `backend` e instale as dependências do NPM:
    ```sh
+   cd backend
    npm install
    ```
 3. Configure as variáveis de ambiente:
@@ -46,11 +47,12 @@ Para começar a usar o projeto, siga as instruções abaixo.
 
 ## Uso
 
-1. Inicie o servidor:
+1. Inicie o servidor a partir da pasta `backend`:
    ```sh
+   cd backend
    npm start
    ```
-2. Abra o arquivo `login.html` em seu navegador.
+2. Abra o arquivo `login.html` da pasta `frontend` em seu navegador.
 
 ## Fluxo da Aplicação
 
