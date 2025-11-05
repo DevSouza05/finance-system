@@ -1,9 +1,9 @@
-"use strict";
+'use strict';
 
-document.addEventListener('DOMContentLoaded', async function () {
-    const token = localStorage.getItem('token');
-    if (!token) {
-        window.location.href = '/login.html';
+document.addEventListener('DOMContentLoaded', function () {
+    const loggedInUser = sessionStorage.getItem('loggedInUser');
+    if (!loggedInUser) {
+        window.location.href = 'login.html';
         return;
     }
 
@@ -18,33 +18,12 @@ document.addEventListener('DOMContentLoaded', async function () {
     const expenses = document.querySelector(".expenses");
     const total = document.querySelector(".total");
 
-    let data = await getFinanceData();
+    const dataKey = `finance_data_${loggedInUser}`;
 
-    async function getFinanceData() {
-        const response = await fetch('/api/data', {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-            },
-        });
-        if (response.ok) {
-            return await response.json();
-        } else {
-            // If the token is invalid, redirect to login
-            window.location.href = '/login.html';
-            return {};
-        }
-    }
+    const getFinanceData = () => JSON.parse(localStorage.getItem(dataKey)) || {};
+    const setFinanceData = (data) => localStorage.setItem(dataKey, JSON.stringify(data));
 
-    async function setFinanceData() {
-        await fetch('/api/data', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
-            body: JSON.stringify(data),
-        });
-    }
+    let data = getFinanceData();
 
     function getCurrentMonth() {
         const now = new Date();
@@ -64,7 +43,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         });
     }
 
-    btnNew.onclick = async () => {
+    btnNew.onclick = () => {
         if (descItem.value.trim() === "" || amount.value.trim() === "" || type.value === "") {
             return alert("Preencha todos os campos!");
         }
@@ -86,7 +65,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             paid: false,
         });
 
-        await setFinanceData();
+        setFinanceData(data);
         populateMonthSelect();
         monthSelect.value = currentMonth;
         loadItens(currentMonth);
@@ -95,15 +74,15 @@ document.addEventListener('DOMContentLoaded', async function () {
         amount.value = "";
     };
 
-    async function deleteItem(month, index) {
+    function deleteItem(month, index) {
         data[month].splice(index, 1);
-        await setFinanceData();
+        setFinanceData(data);
         loadItens(month);
     }
 
     function updateItemStatus(month, index, isPaid) {
         data[month][index].paid = isPaid;
-        setFinanceData();
+        setFinanceData(data);
     }
 
     function insertItem(item, month, index) {
@@ -171,6 +150,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     // Initial Load
     populateMonthSelect();
     const initialMonth = monthSelect.value || getCurrentMonth();
-    monthSelect.value = initialMonth;
-    loadItens(initialMonth);
+    if (initialMonth) {
+        monthSelect.value = initialMonth;
+        loadItens(initialMonth);
+    }
 });
